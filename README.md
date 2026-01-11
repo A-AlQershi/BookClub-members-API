@@ -22,11 +22,11 @@ root/
 
 ## Environment Variables
 
-Create a .env file in the project root with:
+Create a .env file in the project root like this example:
 
 ```
 PORT=3000
-databaseURL=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
+databaseURL="mongodb://localhost:<port>/<DB name>"  #you get the databaseURL from MongoDB
 ```
 
 - PORT: Port the server listens on.
