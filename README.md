@@ -72,7 +72,7 @@ All Members routes are mounted at /members.
 
 - name: string (required)
 - age: number (required)
-- avatar: string (required, filename saved by Multer)
+- avatar: string (optional; filename saved by Multer, defaults to "No Avatar")
 
 Documents include createdAt and updatedAt timestamps.
 
@@ -91,19 +91,24 @@ Documents include createdAt and updatedAt timestamps.
 
 3. POST /members
 
-- Description: Create a member with avatar upload
+- Description: Create a member with optional avatar upload
 - Content-Type: multipart/form-data
 - Form fields:
   - name: string
   - age: number
-  - avatar: file (field name "avatar")
-- Behavior: Multer stores file in /uploads and sets req.body.avatar to the stored filename.
+  - avatar: file (field name "avatar") [optional]
+- Behavior: If a file is uploaded, Multer stores it in /uploads and the stored filename is saved in avatar. If no file is provided, avatar is set to "No Avatar".
 - Response: 201 Created → JSON of created member
 
 4. PUT /members/:id
 
-- Description: Update name/age/avatar filename
-- Body: JSON payload (no Multer on PUT; send avatar filename if you want to change it)
+- Description: Update a member. Supports uploading a new avatar which replaces the previous file and updates the avatar field; also supports updating name/age.
+- Content-Type:
+  - multipart/form-data when uploading a new avatar (field name "avatar")
+  - application/json for non-file updates
+- Behavior:
+  - If a new avatar file is uploaded, the previous avatar file (if any) is deleted from /uploads, and the avatar field is updated to the new stored filename.
+  - If no file is uploaded, only provided fields (e.g., name, age) are updated.
 - Response: 200 OK → updated member (runValidators: true)
 
 5. DELETE /members/:id
@@ -123,12 +128,21 @@ curl -X POST http://localhost:3000/members \
   -F "avatar=@/absolute/path/to/picture.jpg"
 ```
 
-- Update member:
+- Update member (JSON only):
 
 ```
 curl -X PUT http://localhost:3000/members/<id> \
   -H "Content-Type: application/json" \
   -d '{"name":"Alice Cooper","age":29}'
+```
+
+- Update member with new avatar (replaces previous file):
+
+```
+curl -X PUT http://localhost:3000/members/<id> \
+  -F "name=Alice Cooper" \
+  -F "age=29" \
+  -F "avatar=@/absolute/path/to/new-picture.jpg"
 ```
 
 - Delete member:
@@ -139,7 +153,7 @@ curl -X DELETE http://localhost:3000/members/<id>
 
 ## Notes and Considerations
 
-- File Serving: This project stores avatar filenames but does not serve static files from /uploads. To serve them, add:
+- File Serving: This project stores avatar filenames but does not serve static files from /uploads by default. To serve them, add:
 
 ```
 app.use('/uploads', express.static('uploads'))

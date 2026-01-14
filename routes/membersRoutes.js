@@ -55,7 +55,11 @@ membersRoutes.get("/:id", (req, res) => {
 });
 
 membersRoutes.post("/", upload.single("avatar"), async (req, res) => {
-  req.body.avatar = req.file.filename;
+  if (req.file && req.file.filename) {
+    req.body.avatar = req.file.filename;
+  } else if (!req.body.avatar) {
+    req.body.avatar = "No Avatar";
+  }
   try {
     const newMember = new Members(req.body);
     await newMember.save();
@@ -65,8 +69,17 @@ membersRoutes.post("/", upload.single("avatar"), async (req, res) => {
   }
 });
 
-membersRoutes.put("/:id", async (req, res) => {
+membersRoutes.put("/:id", upload.single("avatar"), async (req, res) => {
   try {
+    if (req.file && req.file.filename) {
+      fs.unlink(`./uploads/${req.member.avatar}`, (err) => {
+        if (err) {
+          console.error("Error deleting avatar:", err);
+        }
+        console.log("avatar deleted successfully!");
+      });
+      req.body.avatar = req.file.filename;
+    }
     const updatedMember = await Members.findByIdAndUpdate(
       req.params.id,
       req.body,
